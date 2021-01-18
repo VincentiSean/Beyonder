@@ -35,7 +35,7 @@ function ASIChoice(props) {
 
         featDisplay();
 
-    }, [levelUpChoice, featSelected, featEntries])
+    }, [levelUpChoice, featSelected, featEntries, abilityToggle, featToggle, abilityOneChoice, abilityTwoChoice])
 
     const handleASIChange = (event) => {
         let choice = event.target.value;
@@ -49,6 +49,7 @@ function ASIChoice(props) {
             setFeatPreReq([]);
             setFeatSpells([]);
             setFeatAbility([]);
+            setFeatAbilityChoice();
         } else if (choice === "featImprove") {
             setLevelUpChoice("Feat");
             setAbilityToggle(false);
@@ -203,6 +204,12 @@ function ASIChoice(props) {
         setFeatsFound(true);
     }
 
+    console.log(abilityToggle);
+    console.log(abilityOneChoice);
+    console.log(abilityTwoChoice); 
+    console.log(featSelected);
+    // console.log(featAbilityChooser);
+    console.log(featAbilityChoice);
     return (
         <>
             <FormControl className="form-control">

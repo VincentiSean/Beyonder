@@ -50,7 +50,7 @@ function RaceManager(props) {
             handleApplyRace();
         }
 
-    }, [props.time, props.location.state, charRace, hasSubraces, subrace, subraceBool, checkSubrace, baseTraits])
+    }, [props.time, props.location.state, charRace, hasSubraces, subrace, subraceBool, checkSubrace, baseTraits.length])
 
     // Request information about the chosen race to get information to display/prompt user
     function getRaceDetails(raceName) {
@@ -265,7 +265,7 @@ function RaceManager(props) {
 
     
     // console.log(userChar);
-    console.log(baseTraits);
+    console.log(baseTraits.length);
     console.log(baseTraitNames);
     return (
         <>
@@ -283,10 +283,7 @@ function RaceManager(props) {
                     </Button>
                         <h2 className="class-maanger-header">{charRace}</h2>
                         {subraceSelector}
-                        {baseTraits.length > 0
-                            ?   baseTraits
-                            :   <></>
-                        }
+                        {baseTraits.length > 0 && baseTraits}
                         {subraceBool
                             ?   subTraits
                             // ?   (subrace.entries 

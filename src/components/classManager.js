@@ -59,30 +59,46 @@ function ClassManager(props) {
     const [userSixteenFeatAbilityChoice, setUserSixteenFeatAbilityChoice] = useState();
     const [userNineteenFeatAbilityChoice, setUserNineteenFeatAbilityChoice] = useState();
 
+
+
     useEffect(() => {
+        // Make sure we can get the proper information
         if (props.location !== undefined) {
+            // not best practice (props -> state), but set up some basic information for using later
             setCharClass(props.location.state.classSelected);
             setUserChar(props.location.state.userChar);
+
+            // This prevents running this more than once, on initial run, let's fund some class information out
             if (toolsChoices.length <= 0) {
                 getClassDetails(charClass);
             }
+
+            // Keep running this every time levelSelected is changed
             getClassLevelFeats(levelSelected);
             
         }
-    }, [props.time, props.location.state, charClass, levelSelected, boolTool, toolsChoices, subclassSelected])
+    }, [props.time, 
+        props.location.state, 
+        charClass, 
+        levelSelected, 
+        boolTool, 
+        toolsChoices, 
+        subclassSelected])
+
 
     // Request information about the chosen class to get information to display/prompt user
     function getClassDetails(className) {
         db.ref(`classes/`).on("value", snapshot => {
             snapshot.forEach(snap => {
                 if (snap.val().class[0].name === className) {
-                    setClassSkelly(snap.val());
-                    getToolsSelect(snap.val());
-                    getSubclassSelect(snap.val());
+                    setClassSkelly(snap.val());         //  Will give us all the information about the class in one variable
+                    getToolsSelect(snap.val());         //  This will check for a tool select and set it true/false; if true -> find out what tools and display options
+                    getSubclassSelect(snap.val());      //  This will get all subclasses for the selected class and store them in a state variable
                 }
             });
         });
     }
+
 
     // Check to see if the class has a Tool Proficiency choice and get the possible choices
     function getToolsSelect(classSkelly) {
@@ -106,17 +122,20 @@ function ClassManager(props) {
                 });
             });
 
-            setBoolTool(true);
-            setToolsChoices(choiceArray);
-            setToolNum(choiceNum);
+            setBoolTool(true);              //  This will tell the program to display/not display a tool selector  
+            setToolsChoices(choiceArray);   //  The tools to select from in the selector
+            setToolNum(choiceNum);          //  How many tool proficiencies the user can select
         } else {
-            setBoolTool(false);
+            setBoolTool(false);             //  If no tool proficiency is available to the user, do not display
         }
     }
 
+
+    // This collects all the subclass information and stores it in an object in state for later use
     function getSubclassSelect(classSkelly) {
         const subclassList = [];
 
+        // Loop through all subclasses, eliminating certain edge cases/non-official subclasses
         classSkelly.class[0].subclasses.map((subclass) => {
             if (!subclass.name.includes("UA")) {
                 if (!subclass.name.includes("PSA")) {
@@ -128,34 +147,49 @@ function ClassManager(props) {
         setSubclassList(subclassList);
     }
 
-    // handles only letting the user choose an appropriate amount of skills from the multi select dropdown menu
+    // Handles only letting the user choose an appropriate amount of skills from the multi select dropdown
     const handleSkillSelect = (event) => {
-        console.log(event.target.value);
-        console.log(numSkillSelected);
-        console.log(skillsSelected);
 
+        // If the user has selected less than the previous number of skill proficiencies,
+        //      decrease the numberSelected so they can choose more
         if (event.target.value.length <= numSkillSelected) {
             setNumSkillSelected(numSkillSelected - 1);
             setSkillsSelected(event.target.value);
         }
+
+        // If the number of selected skill proficiencies is less than the max number allowed
+        //      increase the number selected and add newly selected skill to state
         if (numSkillSelected < parseInt(classSkelly.class[0].startingProficiencies.skills[0].choose.count)) {
             setSkillsSelected(event.target.value);
             setNumSkillSelected(numSkillSelected + 1);
         }
     }
 
+    // Handles only letting the user choose an appropriate amount of skills from the multi select dropdown
     const handleToolSelect = (event) => {
+
+        // If the user has selected less than the previous number of tools proficiencies,
+        //      decrease the numberSelected so they can choose more
         if (event.target.value.length <= numToolSelected) {
             setNumToolSelected(numToolSelected - 1);
             setToolsSelected(event.target.value);
         }
+
+        // If the number of selected tools proficiencies is less than the max number allowed
+        //      increase the number selected and add newly selected tool to state
         if (numToolSelected < parseInt(toolNum)) {
             setToolsSelected(event.target.value);
             setNumToolSelected(numToolSelected + 1);
         }
     }
 
+
+    // Handles changing the selected subclass in state
     const handleSubclassSelect = (event) => {
+
+        // event.target.value needs to be split because of using two terms on each submit
+        //      This was done to search accurately through the classSkelly state variable
+        //      Each subclass = "Path of the Berserker;Berserker" etc
         let subclassFull = event.target.value.split(";");
         let subclassName = subclassFull[0];
         let subclassShort = subclassFull[1];
@@ -164,134 +198,182 @@ function ClassManager(props) {
         setSubclassShort(subclassShort);
     }
 
+
+    // Simply changes the level selected in state
     const handleLevelSelected = (event) => {
         setLevelSelected(event.target.value);
     }
 
+
+    // Handles what feat was selected and at what level and 
+    //      applies it to the approriate state variable
+    //  Originally was an object but had issues and this is simpler
+    //  Each selected variable is as follows:
+    //          "level the feat was selected for:featName"
     const handleFeatSelect = (selected) => {
         let splitChoice = selected.split(":");
         let feat = splitChoice[1];
 
-        if (parseInt(splitChoice[0]) === 4) {
-            setASIFourFeat(feat);
-            setASIFourAbilOne(null);
-            setASIFourAbilTwo(null);
-        } else if (parseInt(splitChoice[0]) === 8) {
-            setASIEightFeat(feat);
-            setASIEightAbilOne(null);
-            setASIEightAbilTwo(null);
-        } else if (parseInt(splitChoice[0]) === 12) {
-            setASITwelveFeat(feat);
-            setASITwelveAbilOne(null);
-            setASITwelveAbilTwo(null);
-        } else if (parseInt(splitChoice[0]) === 16) {
-            setASISixteenFeat(feat);
-            setASISixteenAbilOne(null);
-            setASISixteenAbilTwo(null);
-        } else if (parseInt(splitChoice[0]) === 19) {
-            setASINineteenFeat(feat);
-            setASINineteenAbilOne(null);
-            setASINineteenAbilTwo(null);
+        switch(splitChoice[0]) {
+            case 4:
+                setASIFourFeat(feat);
+                setASIFourAbilOne(null);
+                setASIFourAbilTwo(null);
+                break;
+            
+            case 8:
+                setASIEightFeat(feat);
+                setASIEightAbilOne(null);
+                setASIEightAbilTwo(null);
+                break;
+
+            case 12:
+                setASITwelveFeat(feat);
+                setASITwelveAbilOne(null);
+                setASITwelveAbilTwo(null);
+                break;
+
+            case 16:
+                setASISixteenFeat(feat);
+                setASISixteenAbilOne(null);
+                setASISixteenAbilTwo(null);
+                break;
+
+            case 19:
+                setASINineteenFeat(feat);
+                setASINineteenAbilOne(null);
+                setASINineteenAbilTwo(null);
+                break;
+            
+            default:
+                break;
         }
     }
 
+
+    // Handles what ability score was selected and at what level and 
+    //      applies it to the approriate state variable
+    //  Originally was an object but had issues and this is simpler
+    //  Each selected variable is as follows:
+    //          "level the ability was selected for:ability"
     const handleASIOneChange = (selected) => {
         let splitChoice = selected.split(":");
         let ability = splitChoice[1];
 
-        if (parseInt(splitChoice[0]) === 4) {
-            setASIFourFeat(null);
-            setASIFourAbilOne(ability);
-        } else if (parseInt(splitChoice[0]) === 8) {
-            setASIEightFeat(null);
-            setASIEightAbilOne(ability);
-        } else if (parseInt(splitChoice[0]) === 12) {
-            setASITwelveFeat(null);
-            setASITwelveAbilOne(ability);
-        } else if (parseInt(splitChoice[0]) === 16) {
-            setASISixteenFeat(null);
-            setASISixteenAbilOne(ability);
-        } else if (parseInt(splitChoice[0]) === 19) {
-            setASINineteenFeat(null);
-            setASINineteenAbilOne(ability);
+        switch(splitChoice[0]) {
+            case 4:
+                setASIFourFeat(null);
+                setASIFourAbilOne(ability);
+                break;
+            
+            case 8:
+                setASIEightFeat(null);
+                setASIEightAbilOne(ability);
+                break;
+
+            case 12:
+                setASITwelveFeat(null);
+                setASITwelveAbilOne(ability);
+                break;
+
+            case 16:
+                setASISixteenFeat(null);
+                setASISixteenAbilOne(ability);
+                break;
+
+            case 19:
+                setASINineteenFeat(null);
+                setASINineteenAbilOne(ability);
+                break;
+            
+            default:
+                break;
         }
     }
 
+
+    // Handles what ability score was selected and at what level and 
+    //      applies it to the approriate state variable
+    //  Originally was an object but had issues and this is simpler
+    //  Each selected variable is as follows:
+    //          "level the ability was selected for:ability"
     const handleASITwoChange = (selected) => {
         let splitChoice = selected.split(":");
         let ability = splitChoice[1];
 
-        if (parseInt(splitChoice[0]) === 4) {
-            setASIFourFeat(null);
-            setASIFourAbilTwo(ability);
-        } else if (parseInt(splitChoice[0]) === 8) {
-            setASIEightFeat(null);
-            setASIEightAbilTwo(ability);
-        } else if (parseInt(splitChoice[0]) === 12) {
-            setASITwelveFeat(null);
-            setASITwelveAbilTwo(ability);
-        } else if (parseInt(splitChoice[0]) === 16) {
-            setASISixteenFeat(null);
-            setASISixteenAbilTwo(ability);
-        } else if (parseInt(splitChoice[0]) === 19) {
-            setASINineteenFeat(null);
-            setASINineteenAbilTwo(ability);
+        switch(splitChoice[0]) {
+            case 4:
+                setASIFourFeat(null);
+                setASIFourAbilTwo(ability);
+                break;
+            
+            case 8:
+                setASIEightFeat(null);
+                setASIEightAbilTwo(ability);
+                break;
+
+            case 12:
+                setASITwelveFeat(null);
+                setASITwelveAbilTwo(ability);
+                break;
+
+            case 16:
+                setASISixteenFeat(null);
+                setASISixteenAbilTwo(ability);
+                break;
+
+            case 19:
+                setASINineteenFeat(null);
+                setASINineteenAbilTwo(ability);
+                break;
+            
+            default:
+                break;
         }
     }
 
+    // Handles what ability score was selected and at what level and 
+    //      applies it to the approriate state variable
+    //  Originally was an object but had issues and this is simpler
+    //  Each selected variable is as follows:
+    //          "level the ability was selected for:ability"
+
+    // this only applies to feats that grant ability score increases as part of the feat
     const handleFeatAbilityChoice = (selected) => {
-        const splitSelected = selected.split(":");
-        const level = splitSelected[0];
 
-        if (parseInt(level) === 4) {
-            setUserFourFeatAbilityChoice(selected);
-        } else if (parseInt(level) === 8) {
-            setUserEightFeatAbilityChoice(selected);
-        } else if (parseInt(level) === 12) {
-            setUserTwelveFeatAbilityChoice(selected);
-        } else if (parseInt(level) === 16) {
-            setUserSixteenFeatAbilityChoice(selected);
-        } else if (parseInt(level) === 19) {
-            setUserNineteenFeatAbilityChoice(selected);
+        if (selected !== undefined) {
+            const splitSelected = selected.split(":");
+            const level = splitSelected[0];
+
+            switch(level) {
+                case 4:
+                    setUserFourFeatAbilityChoice(selected);
+                    break;
+                
+                case 8:
+                    setUserEightFeatAbilityChoice(selected);
+                    break;
+    
+                case 12:
+                    setUserTwelveFeatAbilityChoice(selected);
+                    break;
+    
+                case 16:
+                    setUserSixteenFeatAbilityChoice(selected);
+                    break;
+    
+                case 19:
+                    setUserNineteenFeatAbilityChoice(selected);
+                    break;
+                
+                default:
+                    break;
+            }
         }
     }
 
-    const handleSubmit = () => {
-        console.log("Logging...");
-        setUserChar(prevState => ({
-            ...prevState,
-            "skillsSelected": skillsSelected,
-            "toolsSelected": toolsSelected,
-            "levelSelected": levelSelected,
-            "subclassSelected": subclassSelected,
-            "classFeats": classFeats,
-            "classSkelly": classSkelly,
-            "subclassShort": subclassShort,
-            "asiFourFeat": asiFourFeat,
-            "asiEightFeat": asiEightFeat,
-            "asiTwelveFeat": asiTwelveFeat,
-            "asiSixteenFeat": asiSixteenFeat,
-            "asiNineteenFeat": asiNineteenFeat,
-            "asiFourAbilOne": asiFourAbilOne,
-            "asiFourAbilTwo": asiFourAbilTwo,
-            "asiEightAbilOne": asiEightAbilOne,
-            "asiEightAbilTwo": asiEightAbilTwo,
-            "asiTwelveAbilOne": asiTwelveAbilOne,
-            "asiTwelveAbilTwo": asiTwelveAbilTwo,
-            "asiSixteenAbilOne": asiSixteenAbilOne,
-            "asiSixteenAbilTwo": asiSixteenAbilTwo,
-            "asiNineteenAbilOne": asiNineteenAbilOne,
-            "asiNineteenAbilTwo": asiNineteenAbilTwo,
-            "userFourFeatAbility": userFourFeatAbilityChoice,
-            "userEightFeatAbility": userEightFeatAbilityChoice,
-            "userTwelveFeatAbility": userTwelveFeatAbilityChoice,
-            "userSixteenFeatAbility": userSixteenFeatAbilityChoice,
-            "userNineteenFeatAbility": userNineteenFeatAbilityChoice,
-        }));
-
-        console.log(userChar);
-    }
-
+    // If the user has the ability to choose a tool proficiency
+    //      display this selector with the appropriate tools
     const toolSelect = boolTool
         ?   (<FormControl className="form-control">
                 <InputLabel id="demo-multiple-checkbox-label">Tools</InputLabel>
@@ -321,10 +403,12 @@ function ClassManager(props) {
         const featNameArray = []
 
         if (classSkelly !== undefined) {
+
             // Find what level this class gets its path feature
             let pathArray = classSkelly.class[0].subclasses[0].subclassFeatures.join(";");
             let pathLevels = pathArray.replaceAll(/[^0-9]+/g, ";").split(";");
 
+            // Loop through class feats excluding non-official ones and add them to an array
             classSkelly.class[0].classFeatures.map((fullString, index) => {
                 if (!String(fullString).includes("UAClassFeatureVariants")) {
                     let featStr = "";
@@ -343,6 +427,7 @@ function ClassManager(props) {
                     featNameArray.push(featStr);
                 }
             });
+
 
             featNameArray.map((featLine, index) => {
                 const featSplit = featLine.split(";");
@@ -436,7 +521,7 @@ function ClassManager(props) {
                                                                 let subEntryArray = [];
                                                                 for(const key in entry.items) {
                                                                     let entryStr = entry.items[key].replaceAll(/[{@}]/g, "");
-                                                                     subEntryArray.push(<li>{entryStr}</li>);
+                                                                    subEntryArray.push(<li>{entryStr}</li>);
                                                                 }
                                                                 return (subEntryArray)
                                                             } else {
@@ -671,14 +756,13 @@ function ClassManager(props) {
         }
     }
 
-    console.log(userChar);
+    console.log(classSkelly);
     return (
         <>
         {classSkelly 
             ?   <>
                     <div className="class-manager">
-                    <Button 
-                        onClick={handleSubmit}
+                    <Button
                         component={Link}
                         to={{
                             pathname: '/race',
@@ -834,7 +918,9 @@ function ClassManager(props) {
                         {classFeats}
                     </div>
                 </>
-            : <></>
+            :   (<div>
+                    <h4>Something went wrong...</h4>
+                </div>)
         }
         </>
     )

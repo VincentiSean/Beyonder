@@ -16,6 +16,8 @@ function ClassChoice(props) {
     const [charClass, setCharClass] = useState("");
     const [userChar, setUserChar] = useState([]);
 
+
+    // Change the class selected and send to userChar, keeping anything else in userChar
     const handleClassChange = (event) => {
         setCharClass(event.target.value);
         const { name, value } = event.target;
